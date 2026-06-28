@@ -76,6 +76,7 @@ async function fetchFromSupabase(): Promise<DashboardBundle> {
     supabase
       .from("sales")
       .select("id, profile_type, customer_id, total, itbis, payment_method, sold_at")
+      .neq("status", "anulada")
       .gte("sold_at", since.toISOString()),
     supabase
       .from("orders")
@@ -113,6 +114,25 @@ async function fetchFromSupabase(): Promise<DashboardBundle> {
     (sales ?? []).map((s) => [s.id, ymd(new Date(s.sold_at)) === ymd(now)]),
   );
 
+  // Pagos por venta (para el desglose por método con pago mixto).
+  let payRows: { sale_id: string; method: string; amount: number }[] = [];
+  if (saleIds.length) {
+    const { data } = await supabase
+      .from("sale_payments")
+      .select("sale_id, method, amount")
+      .in("sale_id", saleIds);
+    payRows = (data ?? []) as typeof payRows;
+  }
+  const paysBySale = new Map<string, { method: string; amount: number }[]>();
+  for (const p of payRows) {
+    const arr = paysBySale.get(p.sale_id) ?? [];
+    arr.push({ method: p.method, amount: Number(p.amount) });
+    paysBySale.set(p.sale_id, arr);
+  }
+  // efectivo / transferencia se mantienen; débito y crédito caen en "tarjeta".
+  const bucketOf = (m: string): "efectivo" | "tarjeta" | "transferencia" =>
+    m === "efectivo" ? "efectivo" : m === "transferencia" ? "transferencia" : "tarjeta";
+
   const build = (profile: ProfileType): DashboardData => {
     const pSales = (sales ?? []).filter((s) => s.profile_type === profile);
     const todays = pSales.filter((s) => ymd(new Date(s.sold_at)) === ymd(now));
@@ -135,16 +155,22 @@ async function fetchFromSupabase(): Promise<DashboardBundle> {
       trend.push({ label: DAY_LABELS[d.getDay()], total });
     }
 
-    // Pagos de hoy (si no hay, usar la ventana completa).
+    // Pagos de hoy (si no hay, usar la ventana completa). Usa el desglose real
+    // de sale_payments cuando existe (pago mixto); si no, atribuye el total al
+    // método de la venta.
     const payBase = todays.length ? todays : pSales;
+    const buckets = { efectivo: 0, tarjeta: 0, transferencia: 0 };
+    for (const s of payBase) {
+      const rows = paysBySale.get(s.id);
+      if (rows && rows.length) {
+        for (const r of rows) buckets[bucketOf(r.method)] += r.amount;
+      } else {
+        buckets[bucketOf(s.payment_method)] += Number(s.total);
+      }
+    }
     const payments: PaymentSlice[] = (
       ["efectivo", "tarjeta", "transferencia"] as const
-    ).map((method) => ({
-      method,
-      total: sum(
-        payBase.filter((s) => s.payment_method === method).map((s) => Number(s.total)),
-      ),
-    }));
+    ).map((method) => ({ method, total: buckets[method] }));
 
     // Unidades y top producto de hoy.
     const todayItems = items.filter(
