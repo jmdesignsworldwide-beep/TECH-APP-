@@ -35,6 +35,8 @@ export function CheckoutModal({
   lines,
   discount,
   seller,
+  customerId,
+  customerName,
 }: {
   open: boolean;
   onClose: () => void;
@@ -43,6 +45,8 @@ export function CheckoutModal({
   lines: CartLine[];
   discount: number;
   seller: string;
+  customerId: string | null;
+  customerName: string | null;
 }) {
   const gross = lines.reduce((s, l) => s + l.price * l.qty, 0);
   const disc = Math.min(Math.max(0, discount), gross);
@@ -99,6 +103,7 @@ export function CheckoutModal({
 
     const res = await checkout({
       profile,
+      customerId,
       items: lines.map((l) => ({ product_id: l.productId, qty: l.qty })),
       payments,
       discount: disc,
@@ -167,7 +172,13 @@ export function CheckoutModal({
       }
     >
       {result ? (
-        <Receipt result={result} lines={lines} payments={usedPayments} seller={seller} />
+        <Receipt
+          result={result}
+          lines={lines}
+          payments={usedPayments}
+          seller={seller}
+          customer={customerName}
+        />
       ) : (
         <div className="space-y-4">
           {/* Resumen */}

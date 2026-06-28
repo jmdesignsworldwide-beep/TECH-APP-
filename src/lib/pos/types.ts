@@ -21,6 +21,7 @@ export interface PaymentEntry {
 /** Lo que el cliente envía al servidor para cobrar. */
 export interface CheckoutInput {
   profile: ProfileType;
+  customerId: string | null;
   items: { product_id: string; qty: number }[];
   payments: PaymentEntry[];
   discount: number;

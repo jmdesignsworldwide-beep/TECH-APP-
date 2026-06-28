@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { useProfile } from "@/lib/profile/profile-provider";
 import { PROFILE_META } from "@/lib/types";
 import type { InventoryBundle } from "@/lib/inventory/types";
+import type { Customer } from "@/lib/customers/types";
 import type { SalesBundle } from "@/lib/pos/types";
 import { cn } from "@/lib/utils";
 import { Register } from "./register";
@@ -16,10 +17,12 @@ type Tab = "vender" | "historial";
 export function PosView({
   inventory,
   sales,
+  customers,
   seller,
 }: {
   inventory: InventoryBundle;
   sales: SalesBundle;
+  customers: Customer[];
   seller: string;
 }) {
   const { profile } = useProfile();
@@ -61,7 +64,13 @@ export function PosView({
       />
 
       {tab === "vender" ? (
-        <Register key={profile} profile={profile} products={products} seller={seller} />
+        <Register
+          key={profile}
+          profile={profile}
+          products={products}
+          customers={customers}
+          seller={seller}
+        />
       ) : (
         <SalesHistory key={profile} sales={profileSales} />
       )}
