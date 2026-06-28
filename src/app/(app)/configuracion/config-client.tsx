@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { PageHeader } from "@/components/layout/page-header";
 import { GlassPanel } from "@/components/ui/glass-panel";
 import { AccessManager } from "@/components/access/access-manager";
+import { AccountPanel } from "@/components/account/account-panel";
 import { useProfile } from "@/lib/profile/profile-provider";
 import { useTheme } from "@/lib/theme/theme-provider";
 import { PROFILE_META, type ProfileType, type ThemeMode } from "@/lib/types";
@@ -34,10 +35,14 @@ export function ConfigClient({
   initialProfile,
   isOwner = false,
   accounts = [],
+  canManageAccount = false,
+  username = "",
 }: {
   initialProfile: ProfileType;
   isOwner?: boolean;
   accounts?: DemoAccount[];
+  canManageAccount?: boolean;
+  username?: string;
 }) {
   const { profile, setProfile } = useProfile();
   const { theme, setTheme } = useTheme();
@@ -139,6 +144,8 @@ export function ConfigClient({
           })}
         </div>
       </section>
+
+      {canManageAccount && <AccountPanel username={username} />}
 
       {isOwner && <AccessManager accounts={accounts} />}
     </div>

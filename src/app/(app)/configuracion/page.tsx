@@ -14,6 +14,15 @@ export default async function Page() {
   const profile = getActiveProfile();
   const user = await getSessionUser();
   const isOwner = user?.role === "owner";
+  const canManageAccount = user?.role === "owner" || user?.role === "admin";
   const accounts = isOwner ? await getDemoAccounts() : [];
-  return <ConfigClient initialProfile={profile} isOwner={isOwner} accounts={accounts} />;
+  return (
+    <ConfigClient
+      initialProfile={profile}
+      isOwner={isOwner}
+      accounts={accounts}
+      canManageAccount={canManageAccount}
+      username={user?.username ?? ""}
+    />
+  );
 }
