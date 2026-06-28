@@ -90,9 +90,12 @@ returns trigger
 language plpgsql
 as $$
 begin
-  raise exception 'El historial de actividad es INVIOLABLE: no se puede % un registro.',
-    case tg_op when 'DELETE' then 'borrar' else 'modificar' end
+  raise exception 'El historial de actividad es INVIOLABLE: %.',
+    case tg_op when 'DELETE' then 'no se puede borrar ningún registro'
+               when 'TRUNCATE' then 'no se puede vaciar el historial'
+               else 'no se puede modificar ningún registro' end
     using errcode = 'check_violation';
+  return null;
 end;
 $$;
 
@@ -105,6 +108,13 @@ drop trigger if exists trg_activity_log_no_delete on public.activity_log;
 create trigger trg_activity_log_no_delete
   before delete on public.activity_log
   for each row execute function public.activity_log_immutable();
+
+-- TRUNCATE no dispara triggers de fila ni respeta el revoke para el dueño:
+-- un trigger de SENTENCIA BEFORE TRUNCATE cierra ese hueco (vaciar = borrar).
+drop trigger if exists trg_activity_log_no_truncate on public.activity_log;
+create trigger trg_activity_log_no_truncate
+  before truncate on public.activity_log
+  for each statement execute function public.activity_log_immutable();
 
 -- Quita los privilegios de modificación/borrado a todo el mundo (defensa en
 -- profundidad; el trigger es el candado final aunque alguien los reotorgue).
@@ -536,22 +546,22 @@ begin
   -- ── Empleados CELULARES ──
   insert into employees (profile_type, full_name, cedula, phone, role, username, hired_at, app_user_id) values
     ('celulares','Pedro Alberto Guzmán','402-1234567-1','809-555-2201','administrador','pguzman', current_date - 420, v_owner)
-    on conflict (cedula) do nothing;
+    on conflict (cedula) where cedula is not null do nothing;
   insert into employees (profile_type, full_name, cedula, phone, role, username, hired_at) values
     ('celulares','Wandy Manuel Ureña','001-1122334-5','829-555-2202','vendedor','wurena', current_date - 300),
     ('celulares','Estarlin de Jesús Pérez','223-9988776-3','849-555-2203','vendedor','eperez', current_date - 180),
     ('celulares','Massiel Carolina Abreu','031-4455667-8','809-555-2204','cajero','mabreu', current_date - 150)
-    on conflict (cedula) do nothing;
+    on conflict (cedula) where cedula is not null do nothing;
 
   -- ── Empleados ELECTRÓNICAS ──
   insert into employees (profile_type, full_name, cedula, phone, role, username, hired_at, app_user_id) values
     ('electronicas','Ramón Antonio Then','402-7654321-9','809-555-3301','administrador','rthen', current_date - 400, v_owner)
-    on conflict (cedula) do nothing;
+    on conflict (cedula) where cedula is not null do nothing;
   insert into employees (profile_type, full_name, cedula, phone, role, username, hired_at) values
     ('electronicas','Yefri Alexander Núñez','001-5566778-9','829-555-3302','vendedor','ynunez', current_date - 260),
     ('electronicas','Geraldine Mercedes Lora','402-3344556-7','849-555-3303','vendedor','glora', current_date - 120),
     ('electronicas','Franklin José Disla','223-1212121-2','809-555-3304','cajero','fdisla', current_date - 90)
-    on conflict (cedula) do nothing;
+    on conflict (cedula) where cedula is not null do nothing;
 
   select id into cel_admin from employees where cedula='402-1234567-1';
   select id into cel_v1    from employees where cedula='001-1122334-5';
