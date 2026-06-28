@@ -1,8 +1,10 @@
-import { Package } from "lucide-react";
-import { ComingSoon } from "@/components/layout/coming-soon";
+import { getOrdersBundle } from "@/lib/orders/queries";
+import { OrdersView } from "@/components/orders/orders-view";
 
 export const metadata = { title: "Pedidos — JM Tech" };
+export const dynamic = "force-dynamic";
 
-export default function Page() {
-  return <ComingSoon title="Pedidos" icon={Package} />;
+export default async function PedidosPage() {
+  const bundle = await getOrdersBundle();
+  return <OrdersView bundle={bundle} />;
 }

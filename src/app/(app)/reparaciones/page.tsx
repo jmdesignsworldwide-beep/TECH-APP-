@@ -1,8 +1,10 @@
-import { Wrench } from "lucide-react";
-import { ComingSoon } from "@/components/layout/coming-soon";
+import { getRepairsBundle } from "@/lib/repairs/queries";
+import { RepairsView } from "@/components/repairs/repairs-view";
 
 export const metadata = { title: "Reparaciones — JM Tech" };
+export const dynamic = "force-dynamic";
 
-export default function Page() {
-  return <ComingSoon title="Reparaciones" icon={Wrench} />;
+export default async function ReparacionesPage() {
+  const bundle = await getRepairsBundle();
+  return <RepairsView bundle={bundle} />;
 }
