@@ -1,9 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { CheckCircle2 } from "lucide-react";
 import { PAYMENT_LABELS } from "@/lib/pos/payment-methods";
+import { receiptFromCheckout } from "@/lib/pos/receipt-format";
 import type { CartLine, CheckoutResult, PaymentEntry } from "@/lib/pos/types";
 import { formatRD } from "@/lib/utils";
+import { ReceiptActions } from "./receipt-actions";
 
 /**
  * Recibo digital de EJEMPLO (no fiscal). Se muestra tras cobrar.
@@ -21,6 +24,15 @@ export function Receipt({
   seller: string;
   customer?: string | null;
 }) {
+  const [dateISO] = useState(() => new Date().toISOString());
+  const data = receiptFromCheckout(
+    result,
+    lines,
+    payments,
+    seller,
+    customer ?? null,
+    dateISO,
+  );
   return (
     <div className="space-y-4">
       <div className="flex flex-col items-center text-center">
@@ -96,6 +108,10 @@ export function Receipt({
         Documento de ejemplo generado para demostración. NCF simulado, no
         certificado ante la DGII.
       </p>
+
+      <div className="flex justify-center">
+        <ReceiptActions data={data} />
+      </div>
     </div>
   );
 }

@@ -16,6 +16,7 @@ import { GlassPanel } from "@/components/ui/glass-panel";
 import { PremiumButton } from "@/components/ui/premium-button";
 import { PremiumModal } from "@/components/ui/premium-modal";
 import { CountUp } from "@/components/ui/count-up";
+import { ScrollRow } from "@/components/ui/scroll-row";
 import { CATEGORIES } from "@/lib/inventory/categories";
 import { CONDITION_LABELS } from "@/lib/inventory/fields";
 import type { Product } from "@/lib/inventory/types";
@@ -133,7 +134,7 @@ export function Register({
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
       {/* Buscar + filtros + resultados */}
-      <div className="lg:col-span-3">
+      <div className="min-w-0 lg:col-span-3">
         <div className="relative">
           <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
           <input
@@ -145,14 +146,14 @@ export function Register({
           />
         </div>
 
-        {/* Categorías (chips) */}
-        <div className="mt-3 flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {/* Categorías (chips) — scroll suave con fades, nunca se cortan */}
+        <ScrollRow className="mt-3">
           {categoryChips.map((c) => (
             <button
               key={c || "todas"}
               onClick={() => setCategory(c)}
               className={cn(
-                "shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+                "shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
                 category === c
                   ? "border-accent/50 bg-accent text-accent-fg"
                   : "border-border/60 bg-surface-2/50 text-muted hover:text-fg",
@@ -161,7 +162,7 @@ export function Register({
               {c || "Todas"}
             </button>
           ))}
-        </div>
+        </ScrollRow>
 
         {/* Filtros + vista */}
         <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -311,7 +312,7 @@ export function Register({
       </div>
 
       {/* Carrito */}
-      <div className="lg:col-span-2">
+      <div className="min-w-0 lg:col-span-2">
         <GlassPanel className="flex h-full flex-col p-4 lg:sticky lg:top-20">
           <CustomerPicker
             customers={customers}

@@ -10,8 +10,10 @@ import { PulseBadge } from "@/components/ui/pulse-badge";
 import { Stagger, StaggerItem } from "@/components/ui/stagger";
 import { voidSale } from "@/lib/pos/actions";
 import { PAYMENT_LABELS } from "@/lib/pos/payment-methods";
+import { receiptFromSale } from "@/lib/pos/receipt-format";
 import type { SaleRecord } from "@/lib/pos/types";
 import { cn, formatRD } from "@/lib/utils";
+import { ReceiptActions } from "./receipt-actions";
 
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleString("es-DO", {
@@ -225,6 +227,10 @@ export function SalesHistory({ sales }: { sales: SaleRecord[] }) {
                 Motivo de anulación: {detail.voidReason}
               </p>
             )}
+
+            <div className="border-t border-border/60 pt-4">
+              <ReceiptActions data={receiptFromSale(detail)} />
+            </div>
 
             {detail.status === "completada" && (
               <div className="border-t border-border/60 pt-4">
