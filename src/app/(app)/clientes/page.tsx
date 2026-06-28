@@ -1,8 +1,10 @@
-import { Users } from "lucide-react";
-import { ComingSoon } from "@/components/layout/coming-soon";
+import { getCustomersBundle } from "@/lib/customers/list-queries";
+import { CustomersView } from "@/components/customers/customers-view";
 
 export const metadata = { title: "Clientes — JM Tech" };
+export const dynamic = "force-dynamic";
 
-export default function Page() {
-  return <ComingSoon title="Clientes" icon={Users} />;
+export default async function ClientesPage() {
+  const bundle = await getCustomersBundle();
+  return <CustomersView bundle={bundle} />;
 }

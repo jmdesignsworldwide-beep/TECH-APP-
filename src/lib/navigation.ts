@@ -33,12 +33,12 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/pos", label: "POS / Ventas", icon: CreditCard, placeholder: true },
   { href: "/pedidos", label: "Pedidos", icon: Package },
   { href: "/caja", label: "Caja", icon: Receipt, placeholder: true },
-  { href: "/clientes", label: "Clientes", icon: Users, placeholder: true },
-  { href: "/proveedores", label: "Proveedores", icon: Truck, placeholder: true },
+  { href: "/clientes", label: "Clientes", icon: Users },
+  { href: "/proveedores", label: "Proveedores", icon: Truck },
   { href: "/empleados", label: "Empleados", icon: UsersRound },
   { href: "/garantias", label: "Garantías", icon: ShieldCheck },
   { href: "/reparaciones", label: "Reparaciones", icon: Wrench },
-  { href: "/reportes", label: "Reportes", icon: BarChart3, placeholder: true },
+  { href: "/reportes", label: "Reportes", icon: BarChart3 },
   { href: "/configuracion", label: "Configuración", icon: Settings },
 ];
 
