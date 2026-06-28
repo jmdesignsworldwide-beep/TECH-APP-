@@ -8,6 +8,13 @@ base**, sin rehacer nada.
 ## Migraciones
 
 - `migrations/0001_foundations.sql` — tipos, tablas, RLS + FORCE RLS, helpers.
+- `migrations/0002_dashboard.sql` — tablas del Dashboard (productos, clientes,
+  ventas, líneas, pedidos, garantías) con RLS + FORCE. **(Tanda 2)**
+- `seed/0001_dominican_seed.sql` — semilla dominicana (RD$, ITBIS 18%): aplicar
+  **después** de 0002. Idempotente (limpia y resiembra). **(Tanda 2)**
+
+Orden de aplicación: `0001` → `0002` → `seed/0001`. Cada uno se envía igual que
+abajo, cambiando solo el archivo del `--data`.
 
 ### Cómo aplicar la migración (vía Management API con PAT temporal)
 
@@ -66,12 +73,31 @@ Fila única (singleton, `id = 1`) con el **perfil activo** del sistema.
 > el preview. El endpoint `/api/profile` puede pasar a escribir aquí en una
 > tanda posterior sin cambiar su contrato.
 
+### Tablas del Dashboard (Tanda 2)
+
+Mínimas para alimentar los KPIs; el detalle de cada módulo llega después.
+
+| Tabla         | Para qué                          | Notas                                   |
+| ------------- | --------------------------------- | --------------------------------------- |
+| `products`    | Inventario base                   | `profile_type`, `price` RD$, `stock`/`min_stock` |
+| `customers`   | Clientes                          | nombre + teléfono (809/829/849)         |
+| `sales`       | Ventas                            | `subtotal`/`itbis`/`total`, `payment_method`, `sold_at` |
+| `sale_items`  | Líneas de venta                   | `qty`, `unit_price`, `line_total`       |
+| `orders`      | Pedidos                           | `status` (pendiente/en_proceso/…)       |
+| `warranties`  | Garantías                         | `expires_at`, `status`                  |
+
+De aquí leen los indicadores: ventas de hoy, bajo stock (`stock <= min_stock`),
+pedidos pendientes, garantías por vencer (≤30 días), tendencia 7 días, métodos
+de pago, unidades y top producto. La lógica vive en `src/lib/dashboard/queries.ts`
+(con fallback a la semilla de demo si no hay Supabase).
+
 ### Seguridad
 
-- **RLS + FORCE RLS** en todas las tablas.
+- **RLS + FORCE RLS** en todas las tablas (incluidas las del Dashboard).
 - Sin privilegios para `anon`.
 - `app_users`: cada quien ve/edita lo suyo; `owner`/`admin` ven todo.
 - `system_settings`: lectura para autenticados; escritura solo `owner`/`admin`.
+- Tablas de negocio: lectura para autenticados; escritura solo `owner`/`admin`.
 - Helpers `is_admin()` / `current_app_role()` son `SECURITY DEFINER` con
   `search_path` fijo para evitar recursión en políticas.
 

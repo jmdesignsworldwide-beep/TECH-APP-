@@ -1,14 +1,23 @@
 import { getSessionUser } from "@/lib/auth/session";
-import { DashboardShowcase } from "./showcase";
+import { getDashboardData } from "@/lib/dashboard/queries";
+import { DashboardView } from "@/components/dashboard/dashboard-view";
 
 export const metadata = { title: "Dashboard — JM Tech" };
 
+// Datos vivos: revalidar en cada visita (las ventas cambian).
+export const dynamic = "force-dynamic";
+
 /**
- * Dashboard. En esta tanda funciona como vitrina de los primitivos premium
- * (KPI count-up, modal estándar, stagger, botones con glow, badges que laten)
- * sobre datos de ejemplo. Las tandas siguientes lo alimentan con datos reales.
+ * Sala de Mando. Lee los datos en el servidor (Supabase real o semilla demo) y
+ * los entrega a la vista, que se revela en cascada y reacciona al perfil activo.
  */
 export default async function DashboardPage() {
-  const user = await getSessionUser();
-  return <DashboardShowcase displayName={user?.displayName ?? "JM"} />;
+  const [user, bundle] = await Promise.all([
+    getSessionUser(),
+    getDashboardData(),
+  ]);
+
+  return (
+    <DashboardView bundle={bundle} displayName={user?.displayName ?? "JM"} />
+  );
 }
