@@ -7,6 +7,7 @@ import { useProfile } from "@/lib/profile/profile-provider";
 import { PROFILE_META } from "@/lib/types";
 import type { InventoryBundle } from "@/lib/inventory/types";
 import type { Customer } from "@/lib/customers/types";
+import type { CatalogBundle } from "@/lib/catalog/types";
 import type { SalesBundle } from "@/lib/pos/types";
 import { cn } from "@/lib/utils";
 import { Register } from "./register";
@@ -16,11 +17,13 @@ type Tab = "vender" | "historial";
 
 export function PosView({
   inventory,
+  catalog,
   sales,
   customers,
   seller,
 }: {
   inventory: InventoryBundle;
+  catalog: CatalogBundle;
   sales: SalesBundle;
   customers: Customer[];
   seller: string;
@@ -34,7 +37,7 @@ export function PosView({
   const demo = inventory.source === "sample";
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-5">
+    <div className="mx-auto flex max-w-7xl flex-col gap-5">
       <PageHeader
         title="Punto de venta"
         subtitle={
@@ -68,6 +71,7 @@ export function PosView({
           key={profile}
           profile={profile}
           products={products}
+          catalog={catalog[profile]}
           customers={customers}
           seller={seller}
         />
