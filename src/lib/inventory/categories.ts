@@ -3,7 +3,7 @@ import type { ProfileType } from "@/lib/types";
 /** Categorías por perfil (las del brief). */
 export const CATEGORIES: Record<ProfileType, string[]> = {
   celulares: [
-    "Celulares/Smartphones",
+    "Smartphones",
     "Tablets/iPads",
     "Smartwatches",
     "Auriculares/AirPods",
