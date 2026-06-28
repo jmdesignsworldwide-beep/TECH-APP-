@@ -10,8 +10,8 @@ const SUPPLIERS = [
   "Electro Importaciones SRL",
 ];
 
-function p(i: number, x: Omit<Product, "id" | "active">): Product {
-  return { id: `sample-${x.profileType}-${i}`, active: true, ...x };
+function p(i: number, x: Omit<Product, "id" | "active" | "imageUrl">): Product {
+  return { id: `sample-${x.profileType}-${i}`, active: true, imageUrl: null, ...x };
 }
 
 const celulares: Product[] = [

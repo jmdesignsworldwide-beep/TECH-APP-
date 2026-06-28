@@ -154,7 +154,11 @@ export function SalesHistory({ sales }: { sales: SaleRecord[] }) {
         open={!!detail}
         onClose={() => setDetail(null)}
         title={detail?.folio}
-        description={detail ? `${fmtDate(detail.soldAt)} · ${detail.seller}` : undefined}
+        description={
+          detail
+            ? `${fmtDate(detail.soldAt)} · ${detail.seller}${detail.customer ? ` · ${detail.customer}` : ""}`
+            : undefined
+        }
         size="md"
       >
         {detail && (

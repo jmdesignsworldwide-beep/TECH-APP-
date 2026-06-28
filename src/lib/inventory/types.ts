@@ -25,6 +25,7 @@ export interface Product {
   warrantyMonths: number;
   entryDate: string | null; // ISO date
   active: boolean;
+  imageUrl: string | null;
   /** Campos específicos del perfil (imei/storage/ram/network o serial/voltage/specs). */
   attributes: Record<string, string>;
 }

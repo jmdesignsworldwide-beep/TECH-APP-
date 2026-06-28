@@ -21,6 +21,7 @@ export function rowToProduct(r: Record<string, unknown>): Product {
     warrantyMonths: Number(r.warranty_months ?? 0),
     entryDate: (r.entry_date as string) ?? null,
     active: r.active !== false,
+    imageUrl: (r.image_url as string) ?? null,
     attributes: (r.attributes as Record<string, string>) ?? {},
   };
 }

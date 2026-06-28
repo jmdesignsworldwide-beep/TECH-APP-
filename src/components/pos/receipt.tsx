@@ -13,11 +13,13 @@ export function Receipt({
   lines,
   payments,
   seller,
+  customer,
 }: {
   result: CheckoutResult;
   lines: CartLine[];
   payments: PaymentEntry[];
   seller: string;
+  customer?: string | null;
 }) {
   return (
     <div className="space-y-4">
@@ -86,7 +88,7 @@ export function Receipt({
 
         <div className="my-3 border-t border-dashed border-border/60" />
         <p className="text-center text-[11px] text-muted">
-          Atendido por {seller}
+          {customer ? `Cliente: ${customer} · ` : ""}Atendido por {seller}
         </p>
       </div>
 

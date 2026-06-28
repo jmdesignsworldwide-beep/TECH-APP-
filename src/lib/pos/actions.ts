@@ -50,7 +50,7 @@ export async function checkout(
   const supabase = createSupabaseServerClient();
   const { data, error } = await supabase.rpc("pos_checkout", {
     p_profile: input.profile,
-    p_customer: null,
+    p_customer: input.customerId,
     p_items: input.items,
     p_payments: input.payments.map((p) => ({
       method: p.method,
