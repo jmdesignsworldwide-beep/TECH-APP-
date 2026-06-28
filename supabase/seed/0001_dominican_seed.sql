@@ -77,7 +77,15 @@ begin
         values (
           v_p, v_cust,
           v_methods[1 + floor(random() * 3)::int],
-          now() - (v_day || ' days')::interval - (floor(random() * 9) || ' hours')::interval,
+          -- Hoy: entre medianoche y ahora (nunca cae en ayer, sea la hora que
+          -- sea). Días pasados: repartido dentro de ese día.
+          case when v_day = 0
+            then date_trunc('day', now())
+                 + (random() * extract(epoch from (now() - date_trunc('day', now()))))::int * interval '1 second'
+            else date_trunc('day', now()) - (v_day || ' days')::interval
+                 + (floor(random() * 15))::int * interval '1 hour'
+                 + (floor(random() * 60))::int * interval '1 minute'
+          end,
           0, 0, 0
         )
         returning id into v_sale;
