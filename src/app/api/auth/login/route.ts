@@ -116,7 +116,16 @@ export async function POST(request: Request) {
     accessExpiresAt: null,
     isActive: true,
   };
-  const token = await signDemoSession(user);
+  let token: string;
+  try {
+    token = await signDemoSession(user);
+  } catch {
+    // Producción sin DEMO_SESSION_SECRET → modo demo deshabilitado (fail-closed).
+    return NextResponse.json(
+      { error: "El modo demo no está disponible en este entorno." },
+      { status: 503 },
+    );
+  }
 
   resetRateLimit(`login:user:${username}`);
 

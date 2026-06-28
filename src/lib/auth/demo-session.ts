@@ -11,8 +11,17 @@ import type { SessionUser } from "@/lib/types";
 
 const encoder = new TextEncoder();
 
-function getSecret(): string {
-  return process.env.DEMO_SESSION_SECRET || "jm-tech-demo-insecure-dev-secret";
+/**
+ * Llave de firma del modo demo. En PRODUCCIÓN nunca se usa una llave conocida:
+ * si falta `DEMO_SESSION_SECRET`, devolvemos null y el modo demo queda
+ * fail-closed (no se pueden firmar ni verificar cookies → imposible forjarlas).
+ * Solo en desarrollo local se permite una llave de conveniencia.
+ */
+function getSecret(): string | null {
+  const s = process.env.DEMO_SESSION_SECRET;
+  if (s && s.length >= 16) return s;
+  if (process.env.NODE_ENV === "production") return null;
+  return "jm-tech-demo-insecure-dev-secret"; // solo dev local
 }
 
 function base64url(bytes: ArrayBuffer | Uint8Array): string {
@@ -31,10 +40,12 @@ function fromBase64url(str: string): Uint8Array {
   return out;
 }
 
-async function hmac(data: string): Promise<string> {
+async function hmac(data: string): Promise<string | null> {
+  const secret = getSecret();
+  if (!secret) return null; // fail-closed en producción sin llave
   const key = await crypto.subtle.importKey(
     "raw",
-    encoder.encode(getSecret()),
+    encoder.encode(secret),
     { name: "HMAC", hash: "SHA-256" },
     false,
     ["sign"],
@@ -56,6 +67,7 @@ export async function signDemoSession(
   const payload: DemoSessionPayload = { ...user, exp: Date.now() + ttlMs };
   const body = base64url(encoder.encode(JSON.stringify(payload)));
   const sig = await hmac(body);
+  if (!sig) throw new Error("DEMO_SESSION_SECRET requerido para el modo demo.");
   return `${body}.${sig}`;
 }
 
@@ -66,6 +78,7 @@ export async function verifyDemoSession(
   if (!token || !token.includes(".")) return null;
   const [body, sig] = token.split(".");
   const expected = await hmac(body);
+  if (!expected) return null; // sin llave válida → ninguna sesión demo es válida
   // Comparación de tiempo constante.
   if (sig.length !== expected.length) return null;
   let diff = 0;
