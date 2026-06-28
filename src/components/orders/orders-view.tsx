@@ -9,12 +9,16 @@ import {
   KpiCard,
   PremiumButton,
   PremiumModal,
+  SmartAutocomplete,
   Stagger,
   StaggerItem,
 } from "@/components/ui";
 import { useProfile } from "@/lib/profile/profile-provider";
 import { PROFILE_META } from "@/lib/types";
 import { createOrder, updateOrderStatus, type OrderInput } from "@/lib/orders/actions";
+import { saveCustomer } from "@/lib/customers/actions";
+import { saveSupplier } from "@/lib/suppliers/actions";
+import { EMPTY_SUGGESTIONS, type SuggestionBundle } from "@/lib/suggestions/types";
 import type { Order, OrdersBundle } from "@/lib/orders/types";
 import { ORDER_FLOW, ORDER_STATUS, type OrderStatus } from "@/lib/postventa/status";
 import { formatDateDO } from "@/lib/pos/receipt-format";
@@ -50,12 +54,32 @@ const emptyInput = (profile: Order["profileType"]): OrderInput => ({
 const inputCls =
   "w-full rounded-xl border border-border/70 bg-surface-2/50 px-3 py-2.5 text-sm text-fg outline-none focus:border-accent/70";
 
-export function OrdersView({ bundle }: { bundle: OrdersBundle }) {
+export function OrdersView({
+  bundle,
+  suggestions,
+}: {
+  bundle: OrdersBundle;
+  suggestions?: SuggestionBundle;
+}) {
   const router = useRouter();
   const { profile } = useProfile();
   const meta = PROFILE_META[profile];
   const list = bundle[profile];
   const demo = bundle.source === "sample";
+  const sugg = suggestions ? suggestions[profile] : EMPTY_SUGGESTIONS;
+
+  async function createCustomerInline(label: string) {
+    const res = await saveCustomer({
+      id: null, profile, fullName: label, cedula: "", phone: "", email: "", address: "", birthday: "",
+    });
+    return res.ok ? { id: res.id, label } : null;
+  }
+  async function createSupplierInline(label: string) {
+    const res = await saveSupplier({
+      id: null, profile, name: label, contact: "", phone: "", email: "", supplies: "", notes: "",
+    });
+    return res.ok ? { id: res.id, label } : null;
+  }
 
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
@@ -290,10 +314,23 @@ export function OrdersView({ bundle }: { bundle: OrdersBundle }) {
       >
         <div className="space-y-3">
           <Field label="Cliente">
-            <input value={form.customerName} onChange={(e) => setForm({ ...form, customerName: e.target.value })} placeholder="Nombre del cliente" autoFocus className={inputCls} />
+            <SmartAutocomplete
+              value={form.customerName}
+              onChange={(v) => setForm({ ...form, customerName: v })}
+              options={sugg.customers}
+              onCreate={createCustomerInline}
+              createNoun="cliente"
+              placeholder="Nombre del cliente"
+              autoFocus
+            />
           </Field>
           <Field label="¿Qué encargó?">
-            <input value={form.itemDesc} onChange={(e) => setForm({ ...form, itemDesc: e.target.value })} placeholder="Ej: iPhone 15 Pro Max 256GB" className={inputCls} />
+            <SmartAutocomplete
+              value={form.itemDesc}
+              onChange={(v) => setForm({ ...form, itemDesc: v })}
+              options={sugg.products}
+              placeholder="Ej: iPhone 15 Pro Max 256GB"
+            />
           </Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Total (RD$)">
@@ -305,7 +342,14 @@ export function OrdersView({ bundle }: { bundle: OrdersBundle }) {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Proveedor">
-              <input value={form.supplier} onChange={(e) => setForm({ ...form, supplier: e.target.value })} placeholder="Proveedor del pedido" className={inputCls} />
+              <SmartAutocomplete
+                value={form.supplier}
+                onChange={(v) => setForm({ ...form, supplier: v })}
+                options={sugg.suppliers}
+                onCreate={createSupplierInline}
+                createNoun="proveedor"
+                placeholder="Proveedor del pedido"
+              />
             </Field>
             <Field label="Fecha estimada">
               <input type="date" value={form.expectedAt} onChange={(e) => setForm({ ...form, expectedAt: e.target.value })} className={inputCls} />

@@ -9,12 +9,15 @@ import {
   KpiCard,
   PremiumButton,
   PremiumModal,
+  SmartAutocomplete,
   Stagger,
   StaggerItem,
 } from "@/components/ui";
 import { useProfile } from "@/lib/profile/profile-provider";
 import { PROFILE_META, type ProfileType } from "@/lib/types";
 import { createRepair, updateRepairStatus, type RepairInput } from "@/lib/repairs/actions";
+import { saveCustomer } from "@/lib/customers/actions";
+import { EMPTY_SUGGESTIONS, type SuggestionBundle } from "@/lib/suggestions/types";
 import type { Repair, RepairsBundle } from "@/lib/repairs/types";
 import { REPAIR_STATUS, repairFlow, type RepairStatus } from "@/lib/postventa/status";
 import { formatDateDO } from "@/lib/pos/receipt-format";
@@ -43,13 +46,27 @@ const emptyInput = (profile: ProfileType): RepairInput => ({
 const inputCls =
   "w-full rounded-xl border border-border/70 bg-surface-2/50 px-3 py-2.5 text-sm text-fg outline-none focus:border-accent/70";
 
-export function RepairsView({ bundle }: { bundle: RepairsBundle }) {
+export function RepairsView({
+  bundle,
+  suggestions,
+}: {
+  bundle: RepairsBundle;
+  suggestions?: SuggestionBundle;
+}) {
   const router = useRouter();
   const { profile } = useProfile();
   const meta = PROFILE_META[profile];
   const list = bundle[profile];
   const demo = bundle.source === "sample";
   const flow = repairFlow(profile);
+  const sugg = suggestions ? suggestions[profile] : EMPTY_SUGGESTIONS;
+
+  async function createCustomerInline(label: string) {
+    const res = await saveCustomer({
+      id: null, profile, fullName: label, cedula: "", phone: "", email: "", address: "", birthday: "",
+    });
+    return res.ok ? { id: res.id, label } : null;
+  }
 
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
@@ -278,11 +295,24 @@ export function RepairsView({ bundle }: { bundle: RepairsBundle }) {
       >
         <div className="space-y-3">
           <Field label="Cliente">
-            <input value={form.customerName} onChange={(e) => setForm({ ...form, customerName: e.target.value })} placeholder="Nombre del cliente" autoFocus className={inputCls} />
+            <SmartAutocomplete
+              value={form.customerName}
+              onChange={(v) => setForm({ ...form, customerName: v })}
+              options={sugg.customers}
+              onCreate={createCustomerInline}
+              createNoun="cliente"
+              placeholder="Nombre del cliente"
+              autoFocus
+            />
           </Field>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Equipo">
-              <input value={form.device} onChange={(e) => setForm({ ...form, device: e.target.value })} placeholder={profile === "celulares" ? "Ej: iPhone 13" : "Ej: Smart TV LG 55\""} className={inputCls} />
+              <SmartAutocomplete
+                value={form.device}
+                onChange={(v) => setForm({ ...form, device: v })}
+                options={sugg.products}
+                placeholder={profile === "celulares" ? "Ej: iPhone 13" : 'Ej: Smart TV LG 55"'}
+              />
             </Field>
             <Field label={idLabel(profile)}>
               <input value={form.identifier} onChange={(e) => setForm({ ...form, identifier: e.target.value })} placeholder={profile === "celulares" ? "IMEI" : "Nº de serie"} className={inputCls} />
@@ -296,7 +326,12 @@ export function RepairsView({ bundle }: { bundle: RepairsBundle }) {
               <input type="number" inputMode="decimal" min={0} value={form.budget} onChange={(e) => setForm({ ...form, budget: e.target.value })} placeholder="0" className={`${inputCls} tnum`} />
             </Field>
             <Field label="Técnico">
-              <input value={form.technician} onChange={(e) => setForm({ ...form, technician: e.target.value })} placeholder="Nombre del técnico" className={inputCls} />
+              <SmartAutocomplete
+                value={form.technician}
+                onChange={(v) => setForm({ ...form, technician: v })}
+                options={sugg.technicians}
+                placeholder="Nombre del técnico"
+              />
             </Field>
           </div>
           {error && <p className="text-sm text-danger">{error}</p>}

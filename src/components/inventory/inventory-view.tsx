@@ -32,6 +32,7 @@ import type {
   ProductInput,
 } from "@/lib/inventory/types";
 import type { CatalogBundle, TreeSelection } from "@/lib/catalog/types";
+import { EMPTY_SUGGESTIONS, type SuggestionBundle } from "@/lib/suggestions/types";
 import { cn } from "@/lib/utils";
 import { ProductCard } from "./product-card";
 import { ProductDetail } from "./product-detail";
@@ -48,13 +49,16 @@ const CONDITIONS = ["nuevo", "usado", "reacondicionado", "exhibicion"];
 export function InventoryView({
   bundle,
   catalog,
+  suggestions,
 }: {
   bundle: InventoryBundle;
   catalog: CatalogBundle;
+  suggestions?: SuggestionBundle;
 }) {
   const router = useRouter();
   const { profile } = useProfile();
   const data = bundle[profile];
+  const sugg = suggestions ? suggestions[profile] : EMPTY_SUGGESTIONS;
   const catalogNodes = catalog[profile];
   const meta = PROFILE_META[profile];
   const { collapsed, toggle: toggleNav } = useNavCollapsed("jm-inv-nav-collapsed");
@@ -324,6 +328,7 @@ export function InventoryView({
             profile={profile}
             product={modal.product}
             prefill={modal.product ? undefined : formPrefill}
+            suggestions={{ brands: sugg.brands, suppliers: sugg.suppliers, categories: sugg.categories }}
             submitting={submitting}
             error={actionError}
             onSubmit={handleSubmit}

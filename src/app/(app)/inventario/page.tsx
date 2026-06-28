@@ -1,5 +1,6 @@
 import { getInventoryBundle } from "@/lib/inventory/queries";
 import { getCatalogBundle } from "@/lib/catalog/queries";
+import { getSuggestionData } from "@/lib/suggestions/queries";
 import { InventoryView } from "@/components/inventory/inventory-view";
 
 export const metadata = { title: "Inventario — JM Tech" };
@@ -13,9 +14,10 @@ export const dynamic = "force-dynamic";
  * POS (componente compartido). CRUD real contra Supabase (rol + RLS).
  */
 export default async function InventarioPage() {
-  const [bundle, catalog] = await Promise.all([
+  const [bundle, catalog, suggestions] = await Promise.all([
     getInventoryBundle(),
     getCatalogBundle(),
+    getSuggestionData(),
   ]);
-  return <InventoryView bundle={bundle} catalog={catalog} />;
+  return <InventoryView bundle={bundle} catalog={catalog} suggestions={suggestions} />;
 }
