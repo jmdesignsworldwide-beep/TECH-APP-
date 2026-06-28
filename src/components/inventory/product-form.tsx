@@ -31,6 +31,7 @@ function todayISO() {
 function initialValues(
   fields: FieldDef[],
   product?: Product,
+  prefill?: Record<string, string>,
 ): Record<string, string> {
   const v: Record<string, string> = {};
   for (const f of fields) {
@@ -49,6 +50,12 @@ function initialValues(
     v.entryDate = v.entryDate || todayISO();
     v.stock = v.stock || "0";
     v.minStock = v.minStock || "5";
+    // Pre-relleno desde la navegación (categoría/marca seleccionada en el árbol).
+    if (prefill) {
+      for (const [k, val] of Object.entries(prefill)) {
+        if (val) v[k] = val;
+      }
+    }
   }
   return v;
 }
@@ -61,6 +68,7 @@ function initialValues(
 export function ProductForm({
   profile,
   product,
+  prefill,
   submitting,
   error,
   onSubmit,
@@ -68,6 +76,7 @@ export function ProductForm({
 }: {
   profile: ProfileType;
   product?: Product;
+  prefill?: Record<string, string>;
   submitting: boolean;
   error: string | null;
   onSubmit: (input: ProductInput) => void;
@@ -75,7 +84,7 @@ export function ProductForm({
 }) {
   const fields = useMemo(() => getFields(profile), [profile]);
   const [values, setValues] = useState<Record<string, string>>(() =>
-    initialValues(fields, product),
+    initialValues(fields, product, prefill),
   );
 
   function set(key: string, val: string) {
