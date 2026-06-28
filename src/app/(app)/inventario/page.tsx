@@ -1,14 +1,17 @@
-import { Boxes } from "lucide-react";
-import { ComingSoon } from "@/components/layout/coming-soon";
+import { getInventoryBundle } from "@/lib/inventory/queries";
+import { InventoryView } from "@/components/inventory/inventory-view";
 
 export const metadata = { title: "Inventario — JM Tech" };
 
-export default function Page() {
-  return (
-    <ComingSoon
-      title="Inventario"
-      icon={Boxes}
-      note="Productos con doble perfil (celulares/electrónicas), stock y alertas de bajo inventario."
-    />
-  );
+// Núcleo real: el inventario refleja cambios al instante.
+export const dynamic = "force-dynamic";
+
+/**
+ * Inventario por perfil. Lee los productos (ambos perfiles) en el servidor y
+ * los entrega a la vista, que muestra el del perfil activo y permite CRUD real
+ * contra Supabase (validado por rol en el servidor + RLS).
+ */
+export default async function InventarioPage() {
+  const bundle = await getInventoryBundle();
+  return <InventoryView bundle={bundle} />;
 }
