@@ -1,5 +1,6 @@
 "use client";
 
+import { useId } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
@@ -12,6 +13,8 @@ import { cn } from "@/lib/utils";
  */
 export function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
+  // layoutId único por instancia (sidebar de escritorio vs. drawer móvil).
+  const activeId = useId();
 
   return (
     <nav className="flex flex-col gap-1">
@@ -34,7 +37,7 @@ export function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
           >
             {active && (
               <motion.span
-                layoutId="nav-active"
+                layoutId={`nav-active-${activeId}`}
                 className="absolute inset-0 -z-10 rounded-xl bg-accent shadow-glow-sm"
                 transition={{ type: "spring", stiffness: 360, damping: 30 }}
               />
@@ -46,18 +49,6 @@ export function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
               strokeWidth={active ? 2.1 : 1.75}
             />
             <span className="truncate">{item.label}</span>
-            {item.placeholder && (
-              <span
-                className={cn(
-                  "ml-auto rounded-md px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
-                  active
-                    ? "bg-black/15 text-accent-fg/80"
-                    : "bg-surface-2/80 text-muted/70",
-                )}
-              >
-                pronto
-              </span>
-            )}
           </Link>
         );
       })}

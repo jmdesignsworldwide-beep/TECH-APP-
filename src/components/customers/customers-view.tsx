@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  Cake,
   CreditCard,
   IdCard,
   Mail,
@@ -66,11 +65,8 @@ export function CustomersView({ bundle }: { bundle: CustomersBundle }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const thisMonth = new Date().getMonth();
   const frequent = list.filter((c) => c.stats.purchaseCount >= FREQUENT).length;
-  const birthdays = list.filter(
-    (c) => c.birthday && new Date(c.birthday + "T00:00:00").getMonth() === thisMonth,
-  ).length;
+  const billedTotal = list.reduce((a, c) => a + c.stats.totalSpent, 0);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -151,7 +147,7 @@ export function CustomersView({ bundle }: { bundle: CustomersBundle }) {
           <KpiCard label="Frecuentes (3+ compras)" value={frequent} icon={Star} />
         </StaggerItem>
         <StaggerItem>
-          <KpiCard label="Cumpleaños del mes" value={birthdays} icon={Cake} />
+          <KpiCard label="Facturado total" value={billedTotal} icon={CreditCard} currency />
         </StaggerItem>
       </Stagger>
 
@@ -226,9 +222,6 @@ export function CustomersView({ bundle }: { bundle: CustomersBundle }) {
               {detail.phone && <DetailRow label="Teléfono" value={detail.phone} />}
               {detail.email && <DetailRow label="Email" value={detail.email} />}
               {detail.address && <DetailRow label="Dirección" value={detail.address} />}
-              {detail.birthday && (
-                <DetailRow label="Cumpleaños" value={formatDateDO(detail.birthday + "T00:00:00").split(" ")[0]} />
-              )}
             </div>
 
             <div>
@@ -301,9 +294,6 @@ export function CustomersView({ bundle }: { bundle: CustomersBundle }) {
             </Field>
             <Field label="Dirección" icon={MapPin}>
               <input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Calle, número, ciudad" className={inputCls} />
-            </Field>
-            <Field label="Cumpleaños" icon={Cake}>
-              <input type="date" value={form.birthday} onChange={(e) => setForm({ ...form, birthday: e.target.value })} className={inputCls} />
             </Field>
             {error && <p className="text-sm text-danger">{error}</p>}
           </div>

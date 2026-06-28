@@ -1,5 +1,6 @@
 "use client";
 
+import { useId } from "react";
 import { motion } from "framer-motion";
 import { Smartphone, Cpu } from "lucide-react";
 import { useProfile } from "@/lib/profile/profile-provider";
@@ -14,10 +15,8 @@ const options: { value: ProfileType; icon: typeof Smartphone }[] = [
 /**
  * Conmutador del PERFIL ACTIVO (celulares ⇄ electrónicas). Al cambiarlo, el
  * acento y la aurora de TODO el sistema se desplazan de cian a índigo de forma
- * fluida — el cableado del color reactivo de esta tanda, ya funcional.
- *
- * El switch de perfil COMPLETO (categorías, campos visibles) llega en una tanda
- * posterior; este control demuestra el re-vestido visual en vivo.
+ * fluida, y cada módulo muestra los datos de esa tienda. El estado activo usa
+ * texto del acento (legible en ambos temas), no relleno sólido con texto oscuro.
  */
 export function ProfileSwitch({
   compact = false,
@@ -27,6 +26,9 @@ export function ProfileSwitch({
   className?: string;
 }) {
   const { profile, setProfile } = useProfile();
+  // layoutId único por instancia: evita que la pastilla "salte" o desaparezca
+  // cuando hay dos selectores montados (barra superior + móvil) a la vez.
+  const pillId = useId();
 
   return (
     <div
@@ -47,13 +49,13 @@ export function ProfileSwitch({
             onClick={() => setProfile(value)}
             className={cn(
               "relative z-10 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors duration-300",
-              active ? "text-accent-fg" : "text-muted hover:text-fg",
+              active ? "text-accent" : "text-muted hover:text-fg",
             )}
           >
             {active && (
               <motion.span
-                layoutId="profile-pill"
-                className="absolute inset-0 -z-10 rounded-full bg-accent shadow-glow-sm"
+                layoutId={`profile-pill-${pillId}`}
+                className="absolute inset-0 -z-10 rounded-full bg-accent/15 ring-1 ring-inset ring-accent/45 shadow-glow-sm"
                 transition={{ type: "spring", stiffness: 380, damping: 32 }}
               />
             )}
