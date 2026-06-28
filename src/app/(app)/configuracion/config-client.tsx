@@ -102,8 +102,8 @@ export function ConfigClient({
           })}
         </div>
         <p className="text-xs text-muted/70">
-          El switch completo de categorías y campos por perfil llega en una tanda
-          posterior. Aquí ya funciona el re-vestido visual reactivo.
+          Cada tienda mantiene su inventario, ventas, caja y reportes
+          independientes. El perfil activo reviste todo el sistema en vivo.
         </p>
       </section>
 
