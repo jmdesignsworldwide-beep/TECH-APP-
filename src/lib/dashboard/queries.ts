@@ -71,7 +71,8 @@ async function fetchFromSupabase(): Promise<DashboardBundle> {
     supabase.from("customers").select("id, full_name"),
     supabase
       .from("products")
-      .select("id, name, brand, profile_type, stock, min_stock"),
+      .select("id, name, brand, profile_type, stock, min_stock")
+      .eq("active", true),
     supabase
       .from("sales")
       .select("id, profile_type, customer_id, total, itbis, payment_method, sold_at")
