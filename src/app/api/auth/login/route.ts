@@ -10,7 +10,8 @@ import {
   signDemoSession,
 } from "@/lib/auth/demo-session";
 import { DEMO_USERS } from "@/lib/auth/session";
-import type { SessionUser } from "@/lib/types";
+import { computeAccess, isBlocked } from "@/lib/access/status";
+import type { AppRole, SessionUser } from "@/lib/types";
 
 export const runtime = "nodejs";
 
@@ -57,7 +58,7 @@ export async function POST(request: Request) {
   // ── Supabase real ─────────────────────────────────────────────
   if (isSupabaseConfigured()) {
     const supabase = createSupabaseServerClient();
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data: signIn, error } = await supabase.auth.signInWithPassword({
       email: usernameToEmail(username),
       password,
     });
@@ -67,6 +68,32 @@ export async function POST(request: Request) {
         { status: 401 },
       );
     }
+
+    // ── Acceso temporal: bloqueo por vencimiento/revocación EN EL SERVIDOR ──
+    // Se valida aquí (y de nuevo en el layout) contra la hora del servidor y el
+    // valor en BD; el navegador no puede saltárselo.
+    const { data: profile } = await supabase
+      .from("app_users")
+      .select("role, is_active, access_expires_at")
+      .eq("auth_id", signIn.user?.id ?? "")
+      .maybeSingle();
+    const access = computeAccess(
+      (profile?.role as AppRole) ?? "staff",
+      profile?.is_active ?? true,
+      (profile?.access_expires_at as string) ?? null,
+    );
+    if (isBlocked(access.status)) {
+      await supabase.auth.signOut(); // no dejamos sesión viva si está bloqueado
+      const msg =
+        access.status === "revoked"
+          ? "Tu acceso fue revocado. Contacta a JM Designs."
+          : "Tu acceso ha expirado. Contacta a JM Designs para renovarlo.";
+      return NextResponse.json(
+        { error: msg, access: access.status },
+        { status: 403 },
+      );
+    }
+
     resetRateLimit(`login:user:${username}`);
     return NextResponse.json({ ok: true });
   }
@@ -86,6 +113,8 @@ export async function POST(request: Request) {
     displayName: demo.displayName,
     role: demo.role,
     source: "demo",
+    accessExpiresAt: null,
+    isActive: true,
   };
   const token = await signDemoSession(user);
 

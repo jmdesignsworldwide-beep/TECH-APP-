@@ -4,9 +4,11 @@ import { Cpu, Moon, Smartphone, Sun } from "lucide-react";
 import { motion } from "framer-motion";
 import { PageHeader } from "@/components/layout/page-header";
 import { GlassPanel } from "@/components/ui/glass-panel";
+import { AccessManager } from "@/components/access/access-manager";
 import { useProfile } from "@/lib/profile/profile-provider";
 import { useTheme } from "@/lib/theme/theme-provider";
 import { PROFILE_META, type ProfileType, type ThemeMode } from "@/lib/types";
+import type { DemoAccount } from "@/lib/access/types";
 import { cn } from "@/lib/utils";
 
 const profiles: { value: ProfileType; icon: typeof Smartphone; desc: string }[] =
@@ -30,8 +32,12 @@ const themes: { value: ThemeMode; icon: typeof Sun; label: string }[] = [
 
 export function ConfigClient({
   initialProfile,
+  isOwner = false,
+  accounts = [],
 }: {
   initialProfile: ProfileType;
+  isOwner?: boolean;
+  accounts?: DemoAccount[];
 }) {
   const { profile, setProfile } = useProfile();
   const { theme, setTheme } = useTheme();
@@ -134,13 +140,7 @@ export function ConfigClient({
         </div>
       </section>
 
-      <GlassPanel className="p-5">
-        <h3 className="text-sm font-semibold text-fg">Acceso temporal</h3>
-        <p className="mt-1 text-sm text-muted">
-          La estructura para cuentas con días de vigencia está preparada en la
-          base, lista para activarse en una tanda posterior sin rehacer el login.
-        </p>
-      </GlassPanel>
+      {isOwner && <AccessManager accounts={accounts} />}
     </div>
   );
 }

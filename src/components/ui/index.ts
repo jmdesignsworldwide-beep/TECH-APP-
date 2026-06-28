@@ -7,3 +7,4 @@ export { PremiumModal } from "./premium-modal";
 export { Stagger, StaggerItem } from "./stagger";
 export { Skeleton } from "./skeleton";
 export { PulseBadge } from "./pulse-badge";
+export { Disclaimer, DISCLAIMERS } from "./disclaimer";

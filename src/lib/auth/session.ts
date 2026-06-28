@@ -32,9 +32,11 @@ export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
     if (!user) return null;
 
     // El perfil/rol vive en la tabla `app_users` (RLS), enlazada por auth uid.
+    // Incluye el ACCESO TEMPORAL (is_active, access_expires_at) para validar el
+    // vencimiento en el servidor.
     const { data: profile } = await supabase
       .from("app_users")
-      .select("username, display_name, role")
+      .select("username, display_name, role, is_active, access_expires_at")
       .eq("auth_id", user.id)
       .maybeSingle();
 
@@ -47,6 +49,8 @@ export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
       displayName: profile?.display_name ?? username,
       role: (profile?.role as AppRole) ?? "staff",
       source: "supabase",
+      accessExpiresAt: (profile?.access_expires_at as string) ?? null,
+      isActive: profile?.is_active ?? true,
     };
   }
 
@@ -60,5 +64,7 @@ export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
     displayName: payload.displayName,
     role: payload.role,
     source: "demo",
+    accessExpiresAt: null,
+    isActive: true,
   };
 });

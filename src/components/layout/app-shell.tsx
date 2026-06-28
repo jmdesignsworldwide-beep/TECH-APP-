@@ -59,6 +59,12 @@ export function AppShell({
         <div className="border-t border-border/60 p-3">
           <ProfileSwitch className="w-full justify-center" />
         </div>
+        <div className="px-4 pb-3">
+          <p className="flex items-center justify-center gap-1.5 text-[10px] text-muted/50">
+            <span className="h-1 w-1 rounded-full bg-accent/60" />
+            Demostración · JM Designs
+          </p>
+        </div>
       </aside>
 
       {/* ── Drawer móvil ──────────────────────────────────────── */}

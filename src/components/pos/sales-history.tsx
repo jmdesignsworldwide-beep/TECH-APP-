@@ -7,6 +7,7 @@ import { GlassPanel } from "@/components/ui/glass-panel";
 import { PremiumButton } from "@/components/ui/premium-button";
 import { PremiumModal } from "@/components/ui/premium-modal";
 import { PulseBadge } from "@/components/ui/pulse-badge";
+import { Disclaimer, DISCLAIMERS } from "@/components/ui/disclaimer";
 import { Stagger, StaggerItem } from "@/components/ui/stagger";
 import { voidSale } from "@/lib/pos/actions";
 import { PAYMENT_LABELS } from "@/lib/pos/payment-methods";
@@ -227,6 +228,8 @@ export function SalesHistory({ sales }: { sales: SaleRecord[] }) {
                 Motivo de anulación: {detail.voidReason}
               </p>
             )}
+
+            {detail.ncfType && <Disclaimer>{DISCLAIMERS.ncf}</Disclaimer>}
 
             <div className="border-t border-border/60 pt-4">
               <ReceiptActions data={receiptFromSale(detail)} />

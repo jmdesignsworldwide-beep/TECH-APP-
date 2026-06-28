@@ -1,7 +1,9 @@
 import { redirect } from "next/navigation";
 import { Aurora } from "@/components/aurora";
 import { AppShell } from "@/components/layout/app-shell";
+import { AccessExpired } from "@/components/access/access-expired";
 import { getSessionUser } from "@/lib/auth/session";
+import { computeAccess, isBlocked } from "@/lib/access/status";
 import { getActiveProfile } from "@/lib/profile/active-profile";
 import { ProfileProvider } from "@/lib/profile/profile-provider";
 
@@ -17,6 +19,14 @@ export default async function AppLayout({
 }) {
   const user = await getSessionUser();
   if (!user) redirect("/login");
+
+  // ── Acceso temporal: bloqueo de servidor (defensa en profundidad) ──
+  // Aunque el login ya valida, el layout vuelve a comprobar el vencimiento en
+  // cada request contra la hora del servidor. El navegador no puede saltárselo.
+  const access = computeAccess(user.role, user.isActive, user.accessExpiresAt);
+  if (isBlocked(access.status)) {
+    return <AccessExpired revoked={access.status === "revoked"} />;
+  }
 
   const profile = getActiveProfile();
 
