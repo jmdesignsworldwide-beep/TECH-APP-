@@ -35,7 +35,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/caja", label: "Caja", icon: Receipt, placeholder: true },
   { href: "/clientes", label: "Clientes", icon: Users, placeholder: true },
   { href: "/proveedores", label: "Proveedores", icon: Truck, placeholder: true },
-  { href: "/empleados", label: "Empleados", icon: UsersRound, placeholder: true },
+  { href: "/empleados", label: "Empleados", icon: UsersRound },
   { href: "/garantias", label: "Garantías", icon: ShieldCheck, placeholder: true },
   { href: "/reparaciones", label: "Reparaciones", icon: Wrench, placeholder: true },
   { href: "/reportes", label: "Reportes", icon: BarChart3, placeholder: true },
