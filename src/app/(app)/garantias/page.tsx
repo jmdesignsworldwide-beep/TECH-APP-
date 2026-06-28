@@ -1,14 +1,10 @@
-import { ShieldCheck } from "lucide-react";
-import { ComingSoon } from "@/components/layout/coming-soon";
+import { getWarrantiesBundle } from "@/lib/warranties/queries";
+import { WarrantiesView } from "@/components/warranties/warranties-view";
 
 export const metadata = { title: "Garantías — JM Tech" };
+export const dynamic = "force-dynamic";
 
-export default function Page() {
-  return (
-    <ComingSoon
-      title="Garantías"
-      icon={ShieldCheck}
-      note="Seguimiento de garantías y alertas de vencimiento."
-    />
-  );
+export default async function GarantiasPage() {
+  const bundle = await getWarrantiesBundle();
+  return <WarrantiesView bundle={bundle} />;
 }
