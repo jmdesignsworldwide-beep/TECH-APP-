@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { AlertCircle } from "lucide-react";
 import { PremiumButton } from "@/components/ui/premium-button";
+import { SmartAutocomplete } from "@/components/ui/smart-autocomplete";
 import {
   getFields,
   SECTION_LABELS,
@@ -11,7 +12,14 @@ import {
 } from "@/lib/inventory/fields";
 import type { Product, ProductCondition, ProductInput } from "@/lib/inventory/types";
 import type { ProfileType } from "@/lib/types";
+import type { Suggestion } from "@/lib/suggestions/types";
 import { cn } from "@/lib/utils";
+
+export interface FormSuggestions {
+  brands: Suggestion[];
+  suppliers: Suggestion[];
+  categories: Suggestion[];
+}
 
 const SECTIONS: FieldDef["section"][] = [
   "basico",
@@ -69,6 +77,7 @@ export function ProductForm({
   profile,
   product,
   prefill,
+  suggestions,
   submitting,
   error,
   onSubmit,
@@ -77,6 +86,7 @@ export function ProductForm({
   profile: ProfileType;
   product?: Product;
   prefill?: Record<string, string>;
+  suggestions?: FormSuggestions;
   submitting: boolean;
   error: string | null;
   onSubmit: (input: ProductInput) => void;
@@ -138,6 +148,13 @@ export function ProductForm({
                   field={f}
                   value={values[f.key] ?? ""}
                   onChange={(val) => set(f.key, val)}
+                  suggest={
+                    f.key === "brand"
+                      ? suggestions?.brands
+                      : f.key === "supplier"
+                        ? suggestions?.suppliers
+                        : undefined
+                  }
                 />
               ))}
             </div>
@@ -181,10 +198,12 @@ function Field({
   field,
   value,
   onChange,
+  suggest,
 }: {
   field: FieldDef;
   value: string;
   onChange: (v: string) => void;
+  suggest?: Suggestion[];
 }) {
   const inputCls =
     "w-full rounded-xl border border-border/70 bg-surface-2/50 px-3.5 py-2.5 text-sm text-fg outline-none transition-colors placeholder:text-muted/50 focus:border-accent/70 focus:bg-surface-2/80";
@@ -195,7 +214,14 @@ function Field({
         {field.label}
         {field.required && <span className="text-accent"> *</span>}
       </span>
-      {field.type === "select" ? (
+      {suggest ? (
+        <SmartAutocomplete
+          value={value}
+          onChange={onChange}
+          options={suggest}
+          placeholder={field.placeholder}
+        />
+      ) : field.type === "select" ? (
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
