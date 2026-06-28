@@ -25,7 +25,7 @@ function weakPassword(pw: string): string | null {
 }
 
 /**
- * Cambia la contraseña de la PROPIA cuenta (owner/admin). Todo en el servidor:
+ * Cambia la contraseña del OWNER real. Todo en el servidor:
  * 1) valida la contraseña ACTUAL re-autenticando con un cliente desechable (sin
  *    tocar la sesión vigente), 2) actualiza la contraseña con la sesión del
  *    usuario. La contraseña nunca se registra ni se expone. Rate-limit por
@@ -37,8 +37,11 @@ export async function changeMyPassword(
 ): Promise<AccountResult> {
   const user = await getSessionUser();
   if (!user) return { ok: false, error: "Sesión no válida." };
-  if (user.role !== "owner" && user.role !== "admin")
-    return { ok: false, error: "No tienes permiso." };
+  // SOLO el owner real puede cambiar contraseña por esta vía. Las cuentas de
+  // demo comparten el rol 'admin', así que se rechazan en el SERVIDOR aunque
+  // intenten llamar la API directamente.
+  if (user.role !== "owner")
+    return { ok: false, error: "No tienes permiso para esta acción." };
   if (!isSupabaseConfigured())
     return { ok: false, error: "Modo demo: conecta Supabase para cambiar la contraseña." };
   if (!currentPassword) return { ok: false, error: "Indica tu contraseña actual." };

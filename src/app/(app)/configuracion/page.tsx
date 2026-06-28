@@ -14,7 +14,9 @@ export default async function Page() {
   const profile = getActiveProfile();
   const user = await getSessionUser();
   const isOwner = user?.role === "owner";
-  const canManageAccount = user?.role === "owner" || user?.role === "admin";
+  // "Mi cuenta" es SOLO del owner real. Las cuentas de demo tienen rol 'admin'
+  // (lo comparten), así que NO basta con is_admin: se exige owner.
+  const canManageAccount = isOwner;
   const accounts = isOwner ? await getDemoAccounts() : [];
   return (
     <ConfigClient

@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 const inputCls =
   "w-full rounded-xl border border-border/70 bg-surface-2/50 px-3 py-2.5 pr-10 text-sm text-fg outline-none focus:border-accent/70";
 
-/** "Mi cuenta": el owner/admin cambia su propia contraseña (verifica la actual). */
+/** "Mi cuenta": SOLO el owner real cambia su contraseña (verifica la actual). */
 export function AccountPanel({ username }: { username: string }) {
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
