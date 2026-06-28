@@ -13,6 +13,9 @@ export interface SessionUser {
   role: AppRole;
   /** Modo de origen de la sesión. */
   source: "supabase" | "demo";
+  /** Acceso temporal: vencimiento (ISO) y estado activo (resueltos en servidor). */
+  accessExpiresAt: string | null;
+  isActive: boolean;
 }
 
 /** Roles de aplicación (validados en el servidor, no solo en UI). */
