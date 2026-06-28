@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { Aurora } from "@/components/aurora";
 import { AppShell } from "@/components/layout/app-shell";
+import { WelcomeOverlay } from "@/components/welcome/welcome-overlay";
 import { AccessExpired } from "@/components/access/access-expired";
 import { getSessionUser } from "@/lib/auth/session";
 import { computeAccess, isBlocked } from "@/lib/access/status";
@@ -33,6 +34,7 @@ export default async function AppLayout({
   return (
     <ProfileProvider initialProfile={profile}>
       <Aurora />
+      <WelcomeOverlay name={user.displayName} />
       <AppShell user={user}>{children}</AppShell>
     </ProfileProvider>
   );

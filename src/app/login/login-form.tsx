@@ -36,6 +36,13 @@ export function LoginForm({ demoMode }: { demoMode: boolean }) {
         setLoading(false);
         return;
       }
+      // Marca que esta sesión recién inició → dispara la bienvenida 1 sola vez.
+      // A prueba de fallos: si sessionStorage no está disponible, no bloquea.
+      try {
+        sessionStorage.setItem("jm-welcome", "1");
+      } catch {
+        /* no-op */
+      }
       router.replace("/dashboard");
       router.refresh();
     } catch {
