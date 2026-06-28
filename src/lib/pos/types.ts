@@ -68,6 +68,7 @@ export interface SaleRecord {
   status: "completada" | "anulada";
   seller: string;
   customer: string | null;
+  customerPhone: string | null;
   soldAt: string;
   voidReason: string | null;
   generatesWarranty: boolean;

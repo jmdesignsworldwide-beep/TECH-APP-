@@ -37,6 +37,7 @@ export function CheckoutModal({
   seller,
   customerId,
   customerName,
+  customerPhone,
 }: {
   open: boolean;
   onClose: () => void;
@@ -47,6 +48,7 @@ export function CheckoutModal({
   seller: string;
   customerId: string | null;
   customerName: string | null;
+  customerPhone: string | null;
 }) {
   const gross = lines.reduce((s, l) => s + l.price * l.qty, 0);
   const disc = Math.min(Math.max(0, discount), gross);
@@ -178,6 +180,7 @@ export function CheckoutModal({
           payments={usedPayments}
           seller={seller}
           customer={customerName}
+          customerPhone={customerPhone}
         />
       ) : (
         <div className="space-y-4">

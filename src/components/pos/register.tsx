@@ -132,9 +132,11 @@ export function Register({
   const categoryChips = ["", ...CATEGORIES[profile]];
 
   return (
-    <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
-      {/* Buscar + filtros + resultados */}
-      <div className="min-w-0 lg:col-span-3">
+    <div className="flex flex-col gap-4">
+      {/* Encabezado a ancho completo: buscar + categorías + filtros.
+          Al ocupar todo el ancho, las categorías muestran muchas más sin
+          desplazar y nunca chocan contra el panel del carrito. */}
+      <div className="space-y-3">
         <div className="relative">
           <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
           <input
@@ -146,8 +148,8 @@ export function Register({
           />
         </div>
 
-        {/* Categorías (chips) — scroll suave con fades, nunca se cortan */}
-        <ScrollRow className="mt-3">
+        {/* Categorías (chips) — scroll suave con fade, nunca se cortan */}
+        <ScrollRow>
           {categoryChips.map((c) => (
             <button
               key={c || "todas"}
@@ -165,7 +167,7 @@ export function Register({
         </ScrollRow>
 
         {/* Filtros + vista */}
-        <div className="mt-2 flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <select
             value={brand}
             onChange={(e) => setBrand(e.target.value)}
@@ -211,7 +213,11 @@ export function Register({
             </ViewBtn>
           </div>
         </div>
+      </div>
 
+      {/* Productos | Carrito */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
+        <div className="min-w-0 lg:col-span-3">
         {/* Resultados */}
         {view === "grid" ? (
           <div className="mt-3 grid grid-cols-2 gap-2.5 sm:grid-cols-3">
@@ -440,6 +446,7 @@ export function Register({
           </div>
         </GlassPanel>
       </div>
+      </div>
 
       <CheckoutModal
         open={checkoutOpen}
@@ -451,6 +458,7 @@ export function Register({
         seller={seller}
         customerId={customer?.id ?? null}
         customerName={customer?.fullName ?? null}
+        customerPhone={customer?.phone ?? null}
       />
 
       {/* Cotización */}

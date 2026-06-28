@@ -17,12 +17,14 @@ export function Receipt({
   payments,
   seller,
   customer,
+  customerPhone,
 }: {
   result: CheckoutResult;
   lines: CartLine[];
   payments: PaymentEntry[];
   seller: string;
   customer?: string | null;
+  customerPhone?: string | null;
 }) {
   const [dateISO] = useState(() => new Date().toISOString());
   const data = receiptFromCheckout(
@@ -32,6 +34,7 @@ export function Receipt({
     seller,
     customer ?? null,
     dateISO,
+    customerPhone ?? null,
   );
   return (
     <div className="space-y-4">

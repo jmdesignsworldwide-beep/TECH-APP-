@@ -14,6 +14,7 @@ export interface ReceiptData {
   payments: { label: string; amount: number }[];
   change: number;
   customer: string | null;
+  customerPhone: string | null;
   seller: string;
   voided?: boolean;
 }
@@ -47,6 +48,7 @@ export function receiptFromCheckout(
   seller: string,
   customer: string | null,
   dateISO: string,
+  customerPhone: string | null = null,
 ): ReceiptData {
   return {
     ncf: result.ncf,
@@ -67,6 +69,7 @@ export function receiptFromCheckout(
     })),
     change: result.change,
     customer,
+    customerPhone,
     seller,
   };
 }
@@ -91,9 +94,27 @@ export function receiptFromSale(sale: SaleRecord): ReceiptData {
     })),
     change: 0,
     customer: sale.customer,
+    customerPhone: sale.customerPhone ?? null,
     seller: sale.seller,
     voided: sale.status === "anulada",
   };
+}
+
+/**
+ * Normaliza un teléfono dominicano a formato wa.me (código país 1 + 10 dígitos).
+ * Devuelve null si no parece válido.
+ */
+export function normalizeDoPhone(input: string): string | null {
+  const digits = (input || "").replace(/\D/g, "");
+  if (digits.length === 10) return `1${digits}`; // 809/829/849 XXXXXXX
+  if (digits.length === 11 && digits.startsWith("1")) return digits;
+  if (digits.length >= 11 && digits.length <= 15) return digits; // otro país
+  return null;
+}
+
+/** Enlace wa.me con el resumen del recibo como mensaje (wa.me no adjunta archivos). */
+export function whatsappUrl(d: ReceiptData, phone: string): string {
+  return `https://wa.me/${phone}?text=${encodeURIComponent(receiptText(d))}`;
 }
 
 /** Recibo en texto plano (para compartir por WhatsApp, etc.). */

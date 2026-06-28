@@ -55,7 +55,7 @@ export const getSalesHistory = cache(async (): Promise<SalesBundle> => {
           ? supabase.from("app_users").select("id, display_name").in("id", sellerIds)
           : Promise.resolve({ data: [] as unknown[] }),
         custIds.length
-          ? supabase.from("customers").select("id, full_name").in("id", custIds)
+          ? supabase.from("customers").select("id, full_name, phone").in("id", custIds)
           : Promise.resolve({ data: [] as unknown[] }),
       ]);
 
@@ -69,6 +69,12 @@ export const getSalesHistory = cache(async (): Promise<SalesBundle> => {
       (customers as { id: string; full_name: string }[]).map((c) => [
         c.id,
         c.full_name,
+      ]),
+    );
+    const custPhone = new Map(
+      (customers as { id: string; phone: string | null }[]).map((c) => [
+        c.id,
+        c.phone ?? null,
       ]),
     );
 
@@ -105,6 +111,7 @@ export const getSalesHistory = cache(async (): Promise<SalesBundle> => {
       status: (s.status as "completada" | "anulada") ?? "completada",
       seller: s.seller_id ? (sellerName.get(s.seller_id) ?? "—") : "—",
       customer: s.customer_id ? (custName.get(s.customer_id) ?? null) : null,
+      customerPhone: s.customer_id ? (custPhone.get(s.customer_id) ?? null) : null,
       soldAt: s.sold_at,
       voidReason: s.void_reason ?? null,
       generatesWarranty: Boolean(s.generates_warranty),
