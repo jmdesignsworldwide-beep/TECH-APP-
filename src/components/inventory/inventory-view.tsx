@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Boxes, Package, Plus, Search, Wallet, X } from "lucide-react";
+import { Boxes, Package, Plus, Search, Wallet } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import {
   KpiCard,
@@ -11,9 +11,15 @@ import {
   Stagger,
   StaggerItem,
 } from "@/components/ui";
+import {
+  CatalogBreadcrumb,
+  CatalogDrawer,
+  CatalogPanel,
+  CatalogToggle,
+  useNavCollapsed,
+} from "@/components/catalog/catalog-kit";
 import { useProfile } from "@/lib/profile/profile-provider";
 import { PROFILE_META } from "@/lib/types";
-import { CATEGORIES } from "@/lib/inventory/categories";
 import { CONDITION_LABELS } from "@/lib/inventory/fields";
 import {
   createProduct,
@@ -25,6 +31,7 @@ import type {
   Product,
   ProductInput,
 } from "@/lib/inventory/types";
+import type { CatalogBundle, TreeSelection } from "@/lib/catalog/types";
 import { cn } from "@/lib/utils";
 import { ProductCard } from "./product-card";
 import { ProductDetail } from "./product-detail";
@@ -38,42 +45,64 @@ type Modal =
 
 const CONDITIONS = ["nuevo", "usado", "reacondicionado", "exhibicion"];
 
-export function InventoryView({ bundle }: { bundle: InventoryBundle }) {
+export function InventoryView({
+  bundle,
+  catalog,
+}: {
+  bundle: InventoryBundle;
+  catalog: CatalogBundle;
+}) {
   const router = useRouter();
   const { profile } = useProfile();
   const data = bundle[profile];
+  const catalogNodes = catalog[profile];
   const meta = PROFILE_META[profile];
+  const { collapsed, toggle: toggleNav } = useNavCollapsed("jm-inv-nav-collapsed");
 
   const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("");
+  const [selection, setSelection] = useState<TreeSelection>({
+    category: null,
+    brand: null,
+  });
   const [condition, setCondition] = useState("");
   const [lowOnly, setLowOnly] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const [modal, setModal] = useState<Modal>({ kind: "none" });
   const [submitting, setSubmitting] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
-  // Al cambiar de perfil, las categorías cambian: limpiamos filtros.
+  // Al cambiar de perfil, reinicia la navegación y filtros.
   useEffect(() => {
     setSearch("");
-    setCategory("");
+    setSelection({ category: null, brand: null });
     setCondition("");
     setLowOnly(false);
+    setMobileNavOpen(false);
   }, [profile]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return data.products.filter((p) => {
       if (q) {
+        // El buscador funciona en paralelo: ignora el nivel del árbol.
         const hay = `${p.name} ${p.brand} ${p.model ?? ""} ${p.sku ?? ""}`.toLowerCase();
         if (!hay.includes(q)) return false;
+      } else {
+        if (selection.category && p.category !== selection.category) return false;
+        if (selection.brand && p.brand !== selection.brand) return false;
       }
-      if (category && p.category !== category) return false;
       if (condition && p.condition !== condition) return false;
       if (lowOnly && !(p.stock <= p.minStock)) return false;
       return true;
     });
-  }, [data.products, search, category, condition, lowOnly]);
+  }, [data.products, search, selection, condition, lowOnly]);
+
+  // Pre-relleno del formulario al crear desde una rama del árbol.
+  const formPrefill: Record<string, string> = {
+    category: selection.category ?? "",
+    brand: selection.brand ?? "",
+  };
 
   function close() {
     setModal({ kind: "none" });
@@ -110,10 +139,11 @@ export function InventoryView({ bundle }: { bundle: InventoryBundle }) {
     }
   }
 
-  const hasFilters = search || category || condition || lowOnly;
+  const hasFilters =
+    search || selection.category || selection.brand || condition || lowOnly;
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-6">
+    <div className="mx-auto flex max-w-7xl flex-col gap-6">
       <PageHeader
         title="Inventario"
         subtitle={
@@ -150,34 +180,29 @@ export function InventoryView({ bundle }: { bundle: InventoryBundle }) {
         </StaggerItem>
       </Stagger>
 
-      {/* Buscar + filtros */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <div className="relative flex-1">
-          <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Buscar por nombre, marca o código…"
-            className="w-full rounded-xl border border-border/70 bg-surface-2/50 py-2.5 pl-10 pr-3 text-sm text-fg outline-none transition-colors placeholder:text-muted/50 focus:border-accent/70"
+      {/* Controles: catálogo + buscador + filtros */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <CatalogToggle
+            collapsed={collapsed}
+            onToggleDesktop={toggleNav}
+            onOpenMobile={() => setMobileNavOpen(true)}
           />
+          <div className="relative flex-1">
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar por nombre, marca o código…"
+              className="w-full rounded-xl border border-border/70 bg-surface-2/50 py-2.5 pl-10 pr-3 text-sm text-fg outline-none transition-colors placeholder:text-muted/50 focus:border-accent/70"
+            />
+          </div>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="rounded-xl border border-border/70 bg-surface-2/50 px-3 py-2.5 text-sm text-fg outline-none focus:border-accent/70"
-          >
-            <option value="">Categoría</option>
-            {CATEGORIES[profile].map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
+        <div className="flex flex-wrap items-center gap-2">
           <select
             value={condition}
             onChange={(e) => setCondition(e.target.value)}
-            className="rounded-xl border border-border/70 bg-surface-2/50 px-3 py-2.5 text-sm capitalize text-fg outline-none focus:border-accent/70"
+            className="rounded-lg border border-border/70 bg-surface-2/50 px-2.5 py-2 text-xs capitalize text-fg outline-none focus:border-accent/70"
           >
             <option value="">Estado</option>
             {CONDITIONS.map((c) => (
@@ -189,7 +214,7 @@ export function InventoryView({ bundle }: { bundle: InventoryBundle }) {
           <button
             onClick={() => setLowOnly((v) => !v)}
             className={cn(
-              "rounded-xl border px-3 py-2.5 text-sm font-medium transition-colors",
+              "rounded-lg border px-2.5 py-2 text-xs font-medium transition-colors",
               lowOnly
                 ? "border-danger/50 bg-danger/10 text-danger"
                 : "border-border/70 bg-surface-2/50 text-muted hover:text-fg",
@@ -200,52 +225,63 @@ export function InventoryView({ bundle }: { bundle: InventoryBundle }) {
         </div>
       </div>
 
-      {/* Resultados */}
-      <div className="flex items-center justify-between text-sm text-muted">
-        <span className="tnum">
-          {filtered.length} de {data.products.length} productos
-        </span>
-        {hasFilters && (
-          <button
-            onClick={() => {
-              setSearch("");
-              setCategory("");
-              setCondition("");
-              setLowOnly(false);
-            }}
-            className="inline-flex items-center gap-1 text-accent hover:underline"
-          >
-            <X className="h-3.5 w-3.5" />
-            Limpiar filtros
-          </button>
+      {/* Catálogo | Productos */}
+      <div className="flex gap-4">
+        {!collapsed && (
+          <CatalogPanel
+            profile={profile}
+            categories={catalogNodes}
+            selection={selection}
+            onSelect={(c, b) => setSelection({ category: c, brand: b })}
+            onCollapse={toggleNav}
+          />
         )}
+
+        <div className="min-w-0 flex-1">
+          <CatalogBreadcrumb
+            selection={selection}
+            search={search}
+            count={filtered.length}
+            onClear={() => setSelection({ category: null, brand: null })}
+          />
+
+          {filtered.length ? (
+            <Stagger
+              key={`${profile}-${filtered.length}-${search}-${selection.category}-${selection.brand}-${condition}-${lowOnly}`}
+              className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4"
+            >
+              {filtered.map((p) => (
+                <StaggerItem key={p.id}>
+                  <ProductCard
+                    product={p}
+                    onClick={() => setModal({ kind: "detail", product: p })}
+                  />
+                </StaggerItem>
+              ))}
+            </Stagger>
+          ) : (
+            <div className="grid place-items-center rounded-2xl border border-dashed border-border/60 py-16 text-center">
+              <Package className="h-8 w-8 text-muted/50" />
+              <p className="mt-3 text-sm font-medium text-fg">Sin productos</p>
+              <p className="mt-1 text-sm text-muted">
+                {hasFilters
+                  ? "Ningún producto coincide con los filtros."
+                  : "Crea el primer producto de este perfil."}
+              </p>
+            </div>
+          )}
+        </div>
       </div>
 
-      {filtered.length ? (
-        <Stagger
-          key={`${profile}-${filtered.length}-${search}-${category}-${condition}-${lowOnly}`}
-          className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4"
-        >
-          {filtered.map((p) => (
-            <StaggerItem key={p.id}>
-              <ProductCard
-                product={p}
-                onClick={() => setModal({ kind: "detail", product: p })}
-              />
-            </StaggerItem>
-          ))}
-        </Stagger>
-      ) : (
-        <div className="grid place-items-center rounded-2xl border border-dashed border-border/60 py-16 text-center">
-          <Package className="h-8 w-8 text-muted/50" />
-          <p className="mt-3 text-sm font-medium text-fg">Sin productos</p>
-          <p className="mt-1 text-sm text-muted">
-            {hasFilters
-              ? "Ningún producto coincide con los filtros."
-              : "Crea el primer producto de este perfil."}
-          </p>
-        </div>
-      )}
+      {/* Catálogo móvil */}
+      <CatalogDrawer
+        open={mobileNavOpen}
+        onClose={() => setMobileNavOpen(false)}
+        profile={profile}
+        categories={catalogNodes}
+        selection={selection}
+        onSelect={(c, b) => setSelection({ category: c, brand: b })}
+      />
 
       {/* Detalle */}
       <PremiumModal
@@ -287,6 +323,7 @@ export function InventoryView({ bundle }: { bundle: InventoryBundle }) {
           <ProductForm
             profile={profile}
             product={modal.product}
+            prefill={modal.product ? undefined : formPrefill}
             submitting={submitting}
             error={actionError}
             onSubmit={handleSubmit}

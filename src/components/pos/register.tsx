@@ -2,24 +2,27 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   FileText,
   LayoutGrid,
   List,
-  ListTree,
   Minus,
-  PanelLeftClose,
   Plus,
   Search,
   ShoppingCart,
   Trash2,
-  X,
 } from "lucide-react";
 import { GlassPanel } from "@/components/ui/glass-panel";
 import { PremiumButton } from "@/components/ui/premium-button";
 import { PremiumModal } from "@/components/ui/premium-modal";
 import { CountUp } from "@/components/ui/count-up";
+import {
+  CatalogBreadcrumb,
+  CatalogDrawer,
+  CatalogPanel,
+  CatalogToggle,
+  useNavCollapsed,
+} from "@/components/catalog/catalog-kit";
 import { CONDITION_LABELS } from "@/lib/inventory/fields";
 import type { Product } from "@/lib/inventory/types";
 import type { Customer } from "@/lib/customers/types";
@@ -27,14 +30,12 @@ import type { CategoryNode, TreeSelection } from "@/lib/catalog/types";
 import type { CartLine } from "@/lib/pos/types";
 import type { ProfileType } from "@/lib/types";
 import { cn, formatRD } from "@/lib/utils";
-import { CategoryNav, CategoryNavTitle } from "./category-nav";
 import { CheckoutModal } from "./checkout-modal";
 import { CustomerPicker } from "./customer-picker";
 import { ProductThumb } from "./product-thumb";
 import { QuoteDoc } from "./quote-doc";
 
 const CONDITIONS = ["nuevo", "usado", "reacondicionado", "exhibicion"];
-const NAV_KEY = "jm-pos-nav-collapsed";
 
 export function Register({
   profile,
@@ -50,7 +51,7 @@ export function Register({
   seller: string;
 }) {
   const router = useRouter();
-  const reduce = useReducedMotion();
+  const { collapsed, toggle: toggleNav } = useNavCollapsed("jm-pos-nav-collapsed");
 
   const [search, setSearch] = useState("");
   const [selection, setSelection] = useState<TreeSelection>({
@@ -60,8 +61,6 @@ export function Register({
   const [condition, setCondition] = useState("");
   const [lowOnly, setLowOnly] = useState(false);
   const [view, setView] = useState<"grid" | "list">("grid");
-
-  const [navCollapsed, setNavCollapsed] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const [lines, setLines] = useState<CartLine[]>([]);
@@ -74,27 +73,6 @@ export function Register({
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [quoteOpen, setQuoteOpen] = useState(false);
 
-  // Recuerda el estado colapsado del catálogo.
-  useEffect(() => {
-    try {
-      setNavCollapsed(localStorage.getItem(NAV_KEY) === "1");
-    } catch {
-      /* sin storage */
-    }
-  }, []);
-  function toggleNav() {
-    setNavCollapsed((v) => {
-      const next = !v;
-      try {
-        localStorage.setItem(NAV_KEY, next ? "1" : "0");
-      } catch {
-        /* sin storage */
-      }
-      return next;
-    });
-  }
-
-  // Al cambiar de perfil, reinicia la navegación y filtros.
   useEffect(() => {
     setSearch("");
     setSelection({ category: null, brand: null });
@@ -109,8 +87,6 @@ export function Register({
       .filter((p) => p.stock > 0)
       .filter((p) => {
         if (q) {
-          // El buscador funciona en paralelo: filtra todo el perfil sin
-          // importar el nivel seleccionado del árbol.
           return `${p.name} ${p.brand} ${p.sku ?? ""}`.toLowerCase().includes(q);
         }
         if (selection.category && p.category !== selection.category) return false;
@@ -165,38 +141,16 @@ export function Register({
     router.refresh();
   }
 
-  const crumb = search
-    ? `Buscando “${search.trim()}”`
-    : selection.brand
-      ? `${selection.category} › ${selection.brand}`
-      : selection.category ?? "Todas";
-
   return (
     <div className="flex flex-col gap-4">
       {/* Encabezado: catálogo + buscador + filtros */}
       <div className="space-y-3">
         <div className="flex items-center gap-2">
-          {/* Móvil: abre el catálogo como panel deslizable */}
-          <button
-            onClick={() => setMobileNavOpen(true)}
-            className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-border/70 bg-surface-2/50 text-fg transition-colors hover:border-accent/60 hover:text-accent lg:hidden"
-            aria-label="Abrir catálogo"
-          >
-            <ListTree className="h-[18px] w-[18px]" />
-          </button>
-          {/* Escritorio: colapsa/expande la columna */}
-          <button
-            onClick={toggleNav}
-            className="hidden h-11 shrink-0 items-center gap-1.5 rounded-xl border border-border/70 bg-surface-2/50 px-3 text-sm text-muted transition-colors hover:border-accent/60 hover:text-accent lg:inline-flex"
-            aria-label="Mostrar u ocultar catálogo"
-          >
-            {navCollapsed ? (
-              <ListTree className="h-[18px] w-[18px]" />
-            ) : (
-              <PanelLeftClose className="h-[18px] w-[18px]" />
-            )}
-            Catálogo
-          </button>
+          <CatalogToggle
+            collapsed={collapsed}
+            onToggleDesktop={toggleNav}
+            onOpenMobile={() => setMobileNavOpen(true)}
+          />
           <div className="relative flex-1">
             <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
             <input
@@ -248,43 +202,23 @@ export function Register({
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
         <div className="min-w-0 lg:col-span-3">
           <div className="flex gap-4">
-            {/* Columna de catálogo (escritorio) */}
-            {!navCollapsed && (
-              <GlassPanel className="hidden w-56 shrink-0 flex-col p-3 lg:flex lg:sticky lg:top-20 lg:max-h-[calc(100dvh-7rem)]">
-                <div className="mb-2 flex items-center justify-between">
-                  <CategoryNavTitle />
-                  <button
-                    onClick={toggleNav}
-                    className="text-muted transition-colors hover:text-accent"
-                    aria-label="Ocultar catálogo"
-                  >
-                    <PanelLeftClose className="h-4 w-4" />
-                  </button>
-                </div>
-                <CategoryNav
-                  profile={profile}
-                  categories={catalog}
-                  selection={selection}
-                  onSelect={(c, b) => setSelection({ category: c, brand: b })}
-                />
-              </GlassPanel>
+            {!collapsed && (
+              <CatalogPanel
+                profile={profile}
+                categories={catalog}
+                selection={selection}
+                onSelect={(c, b) => setSelection({ category: c, brand: b })}
+                onCollapse={toggleNav}
+              />
             )}
 
-            {/* Productos */}
             <div className="min-w-0 flex-1">
-              <div className="mb-3 flex items-center gap-2 text-sm">
-                <span className="min-w-0 truncate font-medium text-fg">{crumb}</span>
-                <span className="shrink-0 text-muted tnum">· {results.length}</span>
-                {!search && (selection.category || selection.brand) && (
-                  <button
-                    onClick={() => setSelection({ category: null, brand: null })}
-                    className="ml-auto inline-flex shrink-0 items-center gap-1 text-accent hover:underline"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                    Limpiar
-                  </button>
-                )}
-              </div>
+              <CatalogBreadcrumb
+                selection={selection}
+                search={search}
+                count={results.length}
+                onClear={() => setSelection({ category: null, brand: null })}
+              />
 
               {view === "grid" ? (
                 <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
@@ -524,47 +458,14 @@ export function Register({
         </div>
       </div>
 
-      {/* Catálogo móvil (panel deslizable) */}
-      <AnimatePresence>
-        {mobileNavOpen && (
-          <>
-            <motion.div
-              className="fixed inset-0 z-40 bg-black/55 backdrop-blur-sm lg:hidden"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setMobileNavOpen(false)}
-            />
-            <motion.aside
-              className="glass fixed inset-y-0 left-0 z-50 flex w-[82vw] max-w-[320px] flex-col p-4 shadow-glass-lg lg:hidden"
-              initial={reduce ? { opacity: 0 } : { x: "-100%" }}
-              animate={reduce ? { opacity: 1 } : { x: 0 }}
-              exit={reduce ? { opacity: 0 } : { x: "-100%" }}
-              transition={{ type: "spring", stiffness: 360, damping: 36 }}
-            >
-              <div className="mb-3 flex items-center justify-between">
-                <CategoryNavTitle />
-                <button
-                  onClick={() => setMobileNavOpen(false)}
-                  className="grid h-9 w-9 place-items-center rounded-xl border border-border/60 text-muted"
-                  aria-label="Cerrar catálogo"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-              <CategoryNav
-                profile={profile}
-                categories={catalog}
-                selection={selection}
-                onSelect={(c, b) => {
-                  setSelection({ category: c, brand: b });
-                  setMobileNavOpen(false);
-                }}
-              />
-            </motion.aside>
-          </>
-        )}
-      </AnimatePresence>
+      <CatalogDrawer
+        open={mobileNavOpen}
+        onClose={() => setMobileNavOpen(false)}
+        profile={profile}
+        categories={catalog}
+        selection={selection}
+        onSelect={(c, b) => setSelection({ category: c, brand: b })}
+      />
 
       <CheckoutModal
         open={checkoutOpen}
@@ -579,7 +480,6 @@ export function Register({
         customerPhone={customer?.phone ?? null}
       />
 
-      {/* Cotización */}
       <PremiumModal
         open={quoteOpen}
         onClose={() => setQuoteOpen(false)}

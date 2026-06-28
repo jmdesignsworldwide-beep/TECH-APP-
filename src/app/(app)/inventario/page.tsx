@@ -1,4 +1,5 @@
 import { getInventoryBundle } from "@/lib/inventory/queries";
+import { getCatalogBundle } from "@/lib/catalog/queries";
 import { InventoryView } from "@/components/inventory/inventory-view";
 
 export const metadata = { title: "Inventario — JM Tech" };
@@ -7,11 +8,14 @@ export const metadata = { title: "Inventario — JM Tech" };
 export const dynamic = "force-dynamic";
 
 /**
- * Inventario por perfil. Lee los productos (ambos perfiles) en el servidor y
- * los entrega a la vista, que muestra el del perfil activo y permite CRUD real
- * contra Supabase (validado por rol en el servidor + RLS).
+ * Inventario por perfil. Lee los productos y el árbol de catálogo (ambos
+ * perfiles) en el servidor; la vista usa la MISMA navegación en árbol que el
+ * POS (componente compartido). CRUD real contra Supabase (rol + RLS).
  */
 export default async function InventarioPage() {
-  const bundle = await getInventoryBundle();
-  return <InventoryView bundle={bundle} />;
+  const [bundle, catalog] = await Promise.all([
+    getInventoryBundle(),
+    getCatalogBundle(),
+  ]);
+  return <InventoryView bundle={bundle} catalog={catalog} />;
 }
