@@ -289,13 +289,22 @@ function MoneyTooltip({ active, payload, label }: { active?: boolean; payload?: 
 function printReport(d: ReportsData, storeLabel: string) {
   const w = window.open("", "_blank", "width=720,height=900");
   if (!w) return;
-  const row = (l: string, v: string) => `<tr><td>${l}</td><td style="text-align:right">${v}</td></tr>`;
+  // Escapa TODO valor interpolado: nombres de productos/empleados/métodos son
+  // datos del negocio (controlables por el usuario) y se inyectan en HTML.
+  const esc = (s: string) =>
+    String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  const row = (l: string, v: string) => `<tr><td>${esc(l)}</td><td style="text-align:right">${esc(v)}</td></tr>`;
   const top = d.topProducts.map((p, i) => row(`${i + 1}. ${p.name}`, `${p.qty} uds`)).join("");
   const emp = d.byEmployee.map((e) => row(e.name, formatRD(e.total))).join("");
   const met = d.byMethod.map((m) => row(m.label, formatRD(m.total))).join("");
   const ser = (d.byMonth as SeriesPoint[]).map((s) => row(s.label, formatRD(s.total))).join("");
   w.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8">
-<title>Reporte — ${storeLabel}</title>
+<title>Reporte — ${esc(storeLabel)}</title>
 <style>
   body{font-family:system-ui,Arial,sans-serif;color:#111;max-width:640px;margin:24px auto;padding:0 16px}
   h1{font-size:20px;margin:0} .muted{color:#666;font-size:13px}
@@ -305,13 +314,13 @@ function printReport(d: ReportsData, storeLabel: string) {
   .kpi{border:1px solid #e3e3e3;border-radius:10px;padding:8px 12px;min-width:120px}
   .kpi b{display:block;font-size:16px} .disc{margin-top:20px;color:#888;font-size:11px;border-top:1px solid #eee;padding-top:8px}
 </style></head><body>
-  <h1>JM Tech — Reporte de ${storeLabel}</h1>
+  <h1>JM Tech — Reporte de ${esc(storeLabel)}</h1>
   <div class="muted">Documento de ejemplo · ${new Date().toLocaleDateString("es-DO")}</div>
   <div class="kpis">
     <div class="kpi"><span class="muted">Ventas (6m)</span><b>${formatRD(d.totalSales)}</b></div>
     <div class="kpi"><span class="muted">N° ventas</span><b>${d.salesCount}</b></div>
     <div class="kpi"><span class="muted">Ticket prom.</span><b>${formatRD(d.ticketAvg)}</b></div>
-    <div class="kpi"><span class="muted">Mejor día</span><b style="text-transform:capitalize">${d.bestDay?.label ?? "—"}</b></div>
+    <div class="kpi"><span class="muted">Mejor día</span><b style="text-transform:capitalize">${esc(d.bestDay?.label ?? "—")}</b></div>
   </div>
   <h2>Ingresos por mes</h2><table>${ser}</table>
   <h2>Productos más vendidos</h2><table>${top}</table>
